@@ -16,7 +16,7 @@ verbose = False
 class MTDevice(object):
 	"""XSens MT device communication object."""
 
-	def __init__(self, port, baudrate=115200, timeout=0.001, autoconf=False,
+	def __init__(self, port, baudrate=115200, timeout=0.01, autoconf=False,
 			config_mode=False):
 		"""Open device."""
 		## serial interface to the device
@@ -105,8 +105,10 @@ class MTDevice(object):
 				continue
 			data = str(buf[-self.length-1:-1])
 			del buf[:]
+			# print data
 			return data
 		else:
+			# print time.time()-start
 			raise MTException("could not find MTData message.")
 
 	## Low-level message receiving function.
@@ -400,9 +402,9 @@ class MTDevice(object):
 	## Read and parse a measurement packet
 	def read_measurement(self, mode=None, settings=None):
 		# getting data
-		data = self.read_data_msg()
-		mid = 0x32
-		# mid, data = self.read_msg()
+		#data = self.read_data_msg()
+		#mid = 0x32
+		mid, data = self.read_msg()
 		if mid==MID.MTData:
 			return self.parse_MTData(data, mode, settings)
 		elif mid==MID.MTData2:
@@ -547,9 +549,24 @@ class MTDevice(object):
 				lat,hgt,hmsl,hacc,vacc,veln,vele,veld,gspeed,headmot,sacc,headacc,headveh,\
 				gdop,pdop,tdop,vdop,hdop,ndop,edop = struct.unpack('!LHBBBBBBLlBBBBllllLLlllllLLlHHHHHHH', content)
 				
-				o['lon']=lon*0.0000001;
-				o['lat']=lat*0.0000001;
-				o['height']=hgt*1000;
+				print o['numSV']
+
+				o['lon']=lon*0.0000001
+				o['lat']=lat*0.0000001
+				o['height']=hgt/1000
+
+				###########
+				o['cov_E'] = o['cov_N'] = (hacc/1000)*(hacc/1000)/2 
+				o['cov_D'] = (vacc/1000)*(vacc/1000);
+
+			# elif (data_id&0x00F0) == 0x20:	# PVT Data
+				# TO DO: Sat Info
+
+			else:
+				raise MTException("unknown packet: 0x%04X."%data_id)
+			
+			return o
+		############################################################################################
 				# print lon*0.0000001,lat*0.0000001
 			# # elif (data_id&0x00F0) == 0x20:	# SV Info
 			# # 	o['iTOW'], o['numCh'] = struct.unpack('!LBxx', content[:8])
@@ -563,7 +580,6 @@ class MTDevice(object):
 			# # 	o['channels'] = channels
 			# else:
 			# 	raise MTException("unknown packet: 0x%04X."%data_id)
-			return o
 		#######################################################################################
 		def parse_SCR(data_id, content, ffmt):
 			o = {}
@@ -619,6 +635,7 @@ class MTDevice(object):
 		while data:
 			try:
 				data_id, size = struct.unpack('!HB', data[:3])
+				# print (data_id&0x0003)
 				if (data_id&0x0003) == 0x3:
 					float_format = 'd'
 				elif (data_id&0x0003) == 0x0:

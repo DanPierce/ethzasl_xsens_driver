@@ -6,7 +6,7 @@ import select
 import mtdevice
 
 from std_msgs.msg import Header, Float32
-from sensor_msgs.msg import Imu, NavSatFix, NavSatStatus
+from sensor_msgs.msg import Imu, NavSatFix, NavSatStatus, FluidPressure
 from geometry_msgs.msg import TwistStamped, Vector3Stamped
 from gps_common.msg import GPSFix, GPSStatus
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
@@ -97,7 +97,9 @@ class XSensDriver(object):
 		self.temp_pub = rospy.Publisher('temperature', Float32,queue_size=1)	# decide type
 		# TODO pressure, ITOW from raw GPS?
 		self.old_bGPS = 256	# publish GPS only if new
-
+		####################################################################################################
+		self.press_pub = rospy.Publisher('pressure',FluidPressure, queue_size=1)
+		####################################################################################################
 
 
 	def spin(self):
@@ -149,13 +151,15 @@ class XSensDriver(object):
 		status = data.get('Stat')	# int
 
 		# get data (from new serial MTi device)
+		####################################################################################################
 		accel_data = data.get('Acceleration')
 		gyro_data = data.get('Angular Velocity')
 		pvt_data = data.get('PVT')
-		# print this['accX']
-		# print data
+		orientation_data = data.get('Orientation Data')
+		mag_data = data.get('Magnetic')
+		press_data = data.get('Pressure')
 
-		# print pvt_data
+		####################################################################################################
 
 		# create messages and default values
 		imu_msg = Imu()
@@ -172,6 +176,10 @@ class XSensDriver(object):
 		pub_mag = False
 		temp_msg = Float32()
 		pub_temp = False
+		###################################################################################################
+		press_msg = FluidPressure()
+		pub_press = False
+		###################################################################################################
 
 		# fill information where it's due
 		# start by raw information that can be overriden
@@ -259,6 +267,66 @@ class XSensDriver(object):
 				pub_imu = True
 			except KeyError:
 				pass
+		##########################################################################################
+		
+		if pvt_data:
+			try:
+				# print type(pvt_data['lat'])
+				tlat = pvt_data['lat']
+				tlon = pvt_data['lon']
+				thgt = pvt_data['height']
+				gps_msg.latitude = tlat
+				gps_msg.longitude = tlon
+				gps_msg.altitude = thgt
+				
+				horiz_acc = pvt_data['cov_N']
+				vert_acc = pvt_data['cov_D']
+
+				gps_msg.position_covariance = (horiz_acc, 0., 0., 0., horiz_acc, 0., 0., 0., vert_acc)
+
+				
+				pub_gps = True
+			except KeyError:
+				pass
+
+		if orientation_data:
+			try:
+				w = orientation_data['Q0']
+				x = orientation_data['Q1']
+				y = orientation_data['Q2']
+				z = orientation_data['Q3']
+
+				imu_msg.orientation.x = x
+				imu_msg.orientation.y = y
+				imu_msg.orientation.z = z
+				imu_msg.orientation.w = w
+			except KeyError:
+				pass
+
+		if mag_data:
+			try:
+				x = mag_data['magX']
+				y = mag_data['magY']
+				z = mag_data['magZ']
+
+				v = numpy.array([x, y, z])
+				v = v.dot(self.R)
+
+				mag_msg.vector.x = v[0]
+				mag_msg.vector.y = v[1]
+				mag_msg.vector.z = v[2]
+				pub_mag = True
+			except KeyError:
+				pass
+
+		if press_data:
+			try:
+				p = press_data['Pressure']
+				press_msg.fluid_pressure = p
+				pub_press = True
+			except KeyError:
+				pass
+
 		##########################################################################################################
 		if imu_data:
 			try:
@@ -316,6 +384,7 @@ class XSensDriver(object):
 			vel_msg.twist.linear.x = velocity_data['Vel_X']
 			vel_msg.twist.linear.y = velocity_data['Vel_Y']
 			vel_msg.twist.linear.z = velocity_data['Vel_Z']
+		
 		if orient_data:
 			pub_imu = True
 			orient_quat = quat_from_orient(orient_data)
@@ -325,6 +394,7 @@ class XSensDriver(object):
 			imu_msg.orientation.w = orient_quat[3]
 			imu_msg.orientation_covariance = (radians(1.), 0., 0., 0.,
 					radians(1.), 0., 0., 0., radians(9.))
+			
 		if position_data:
 			pub_gps = True
 			xgps_msg.latitude = gps_msg.latitude = position_data['Lat']
@@ -383,7 +453,11 @@ class XSensDriver(object):
 			self.mag_pub.publish(mag_msg)
 		if pub_temp:
 			self.temp_pub.publish(temp_msg)
-
+		############################################################################################
+		if pub_press:
+			press_msg.header = h
+			self.press_pub.publish(press_msg)
+		############################################################################################
 
 
 def main():
