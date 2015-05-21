@@ -79,7 +79,7 @@ class XSensDriver(object):
 
 		self.R = R.dot(R_IMU.transpose())
 
-		self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray,queue_size=1)
+		self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray,queue_size=100)
 		self.diag_msg = DiagnosticArray()
 		self.stest_stat = DiagnosticStatus(name='mtnode: Self Test', level=1,
 				message='No status information')
@@ -89,16 +89,16 @@ class XSensDriver(object):
 				message='No status information')
 		self.diag_msg.status = [self.stest_stat, self.xkf_stat, self.gps_stat]
 
-		self.imu_pub = rospy.Publisher('imu/data', Imu,queue_size=1)
-		self.gps_pub = rospy.Publisher('fix', NavSatFix,queue_size=1)
-		self.xgps_pub = rospy.Publisher('fix_extended', GPSFix,queue_size=1)
-		self.vel_pub = rospy.Publisher('velocity', TwistStamped,queue_size=1)
-		self.mag_pub = rospy.Publisher('magnetic', Vector3Stamped,queue_size=1)
-		self.temp_pub = rospy.Publisher('temperature', Float32,queue_size=1)	# decide type
+		self.imu_pub = rospy.Publisher('xsens/data', Imu,queue_size=100)
+		self.gps_pub = rospy.Publisher('fix', NavSatFix,queue_size=100)
+		self.xgps_pub = rospy.Publisher('fix_extended', GPSFix,queue_size=100)
+		self.vel_pub = rospy.Publisher('velocity', TwistStamped,queue_size=100)
+		self.mag_pub = rospy.Publisher('magnetic', Vector3Stamped,queue_size=100)
+		self.temp_pub = rospy.Publisher('temperature', Float32,queue_size=100)	# decide type
 		# TODO pressure, ITOW from raw GPS?
 		self.old_bGPS = 256	# publish GPS only if new
 		####################################################################################################
-		self.press_pub = rospy.Publisher('pressure',FluidPressure, queue_size=1)
+		self.press_pub = rospy.Publisher('pressure',FluidPressure, queue_size=100)
 		####################################################################################################
 
 
