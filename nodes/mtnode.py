@@ -59,6 +59,7 @@ class XSensDriver(object):
 		self.mt = mtdevice.MTDevice(device, baudrate)
 
 		self.frame_id = get_param('~frame_id', '/base_imu')
+		self.topic_name = get_param('~topic_name', '/xsens/data')
 
 		frame_local     = get_param('~frame_local'    , 'ENU')
 		frame_local_imu = get_param('~frame_local_imu', 'ENU')
@@ -89,7 +90,7 @@ class XSensDriver(object):
 				message='No status information')
 		self.diag_msg.status = [self.stest_stat, self.xkf_stat, self.gps_stat]
 
-		self.imu_pub = rospy.Publisher('xsens/data', Imu,queue_size=100)
+		self.imu_pub = rospy.Publisher(self.topic_name, Imu,queue_size=100)
 		self.gps_pub = rospy.Publisher('fix', NavSatFix,queue_size=100)
 		self.xgps_pub = rospy.Publisher('fix_extended', GPSFix,queue_size=100)
 		self.vel_pub = rospy.Publisher('velocity', TwistStamped,queue_size=100)
@@ -338,7 +339,7 @@ class XSensDriver(object):
 				if (speed > 0.5):
 					xgps_msg.track = atan2(vele,veln)
 				else:
-					xgps_msg.track = 999
+					xgps_msg.track = 999.0
 
 				# STATUS
 				xgps_msg.status.satellites_used = pvt_data['numSV']
