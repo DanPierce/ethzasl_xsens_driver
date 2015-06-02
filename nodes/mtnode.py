@@ -13,7 +13,7 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 
 # transform Euler angles or matrix into quaternions
-from math import pi, radians
+from math import pi, radians, atan2, degrees
 from tf.transformations import quaternion_from_matrix, quaternion_from_euler, identity_matrix
 
 import numpy
@@ -331,10 +331,19 @@ class XSensDriver(object):
 				xgps_msg.position_covariance[4] = std_e*std_e
 				xgps_msg.position_covariance[8] = std_vert*std_vert
 
+				speed = pvt_data['SPEED']*1e-3
+				veln = pvt_data['VELN']*1e-3
+				vele = pvt_data['VELE']*1e-3
+
+				if (speed > 0.5):
+					xgps_msg.track = atan2(vele,veln)
+				else:
+					xgps_msg.track = 999
+
 				# STATUS
 				xgps_msg.status.satellites_used = pvt_data['numSV']
 				
-				print 'numSV:',pvt_data['numSV'],'var_n:',xgps_msg.position_covariance[0],'var_e:',xgps_msg.position_covariance[4],'var_d:',xgps_msg.position_covariance[8]
+				print 'numSV:',pvt_data['numSV'],'speed:',speed,'Course:',degrees(xgps_msg.track),'var_n:',xgps_msg.position_covariance[0],'var_e:',xgps_msg.position_covariance[4],'var_d:',xgps_msg.position_covariance[8]
 
 				pub_gps = True
 			except KeyError:

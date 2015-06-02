@@ -546,7 +546,7 @@ class MTDevice(object):
 				# o['itow']=struct.unpack('!L', content)
 				o['iTOW'],o['year'],o['month'],o['day'],o['hour'],o['min'],o['sec'],o['valid'],\
 				o['tAcc'],o['nano'],o['fixtype'],o['flags'],o['numSV'],o['Reserved1'],lon,\
-				lat,hgt,hmsl,hacc,vacc,veln,vele,veld,gspeed,headmot,sacc,headacc,headveh,\
+				lat,hgt,hmsl,hacc,vacc,o['VELN'],o['VELE'],o['VELD'],o['SPEED'],headmot,sacc,headacc,headveh,\
 				o['gdop'],o['pdop'],o['tdop'],o['vdop'],o['hdop'],o['ndop'],o['edop'] = struct.unpack('!LHBBBBBBLlBBBBllllLLlllllLLlHHHHHHH', content)
 				
 				o['LAT'] = lat
