@@ -242,8 +242,7 @@ class XSensDriver(object):
 				xgps_msg.position_covariance[8] = std_vert*std_vert
 
 				# STATUS
-				xgps_msg.status.satellites_used = o['numSV']
-				
+				xgps_msg.status.satellites_used = rawgps_data['numSV']
 
 			self.old_bGPS = rawgps_data['bGPS']
 		if temp is not None:
@@ -305,7 +304,38 @@ class XSensDriver(object):
 
 				gps_msg.position_covariance = (horiz_acc, 0., 0., 0., horiz_acc, 0., 0., 0., vert_acc)
 
+				# extended GPS message
+				# LLA
+				xgps_msg.latitude = gps_msg.latitude = pvt_data['LAT']*1e-7
+				xgps_msg.longitude = gps_msg.longitude = pvt_data['LON']*1e-7
+				xgps_msg.altitude = gps_msg.altitude = pvt_data['ALT']*1e-3
+				# NED vel # TODO?
+				# Accuracy - multiply by 2 for 95% confidence
+				xgps_msg.err_horz = 2*pvt_data['Hacc']*1e-3
+				xgps_msg.err_vert = 2*pvt_data['Vacc']*1e-3
+
+				xgps_msg.time = pvt_data['iTOW']*1e-3
+
+				xgps_msg.gdop = pvt_data['gdop']*1e-2
+				xgps_msg.pdop = pvt_data['pdop']*1e-2
+				xgps_msg.hdop = pvt_data['hdop']*1e-2
+				xgps_msg.vdop = pvt_data['vdop']*1e-2
+				xgps_msg.tdop = pvt_data['tdop']*1e-2
+
+				std_horz = xgps_msg.err_horz*0.5
+				std_n = std_horz*0.5
+				std_e = std_horz*0.5
+				std_vert = xgps_msg.err_vert*0.5
+
+				xgps_msg.position_covariance[0] = std_n*std_n
+				xgps_msg.position_covariance[4] = std_e*std_e
+				xgps_msg.position_covariance[8] = std_vert*std_vert
+
+				# STATUS
+				xgps_msg.status.satellites_used = pvt_data['numSV']
 				
+				print 'numSV:',pvt_data['numSV'],'var_n:',xgps_msg.position_covariance[0],'var_e:',xgps_msg.position_covariance[4],'var_d:',xgps_msg.position_covariance[8]
+
 				pub_gps = True
 			except KeyError:
 				pass

@@ -549,8 +549,6 @@ class MTDevice(object):
 				lat,hgt,hmsl,hacc,vacc,veln,vele,veld,gspeed,headmot,sacc,headacc,headveh,\
 				o['gdop'],o['pdop'],o['tdop'],o['vdop'],o['hdop'],o['ndop'],o['edop'] = struct.unpack('!LHBBBBBBLlBBBBllllLLlllllLLlHHHHHHH', content)
 				
-				print o['numSV']
-
 				o['LAT'] = lat
 				o['LON'] = lon
 				o['ALT'] = hgt
