@@ -220,10 +220,31 @@ class XSensDriver(object):
 				xgps_msg.longitude = gps_msg.longitude = rawgps_data['LON']*1e-7
 				xgps_msg.altitude = gps_msg.altitude = rawgps_data['ALT']*1e-3
 				# NED vel # TODO?
-				# Accuracy
-				# 2 is there to go from std_dev to 95% interval
+				# Accuracy - multiply by 2 for 95% confidence
 				xgps_msg.err_horz = 2*rawgps_data['Hacc']*1e-3
 				xgps_msg.err_vert = 2*rawgps_data['Vacc']*1e-3
+
+				xgps_msg.time = rawgps_data['iTOW']*1e-3
+
+				xgps_msg.gdop = rawgps_data['gdop']*1e-2
+				xgps_msg.pdop = rawgps_data['pdop']*1e-2
+				xgps_msg.hdop = rawgps_data['hdop']*1e-2
+				xgps_msg.vdop = rawgps_data['vdop']*1e-2
+				xgps_msg.tdop = rawgps_data['tdop']*1e-2
+
+				std_horz = xgps_msg.err_horz*0.5
+				std_n = std_horz*0.5
+				std_e = std_horz*0.5
+				std_vert = xgps_msg.err_vert*0.5
+
+				xgps_msg.position_covariance[0] = std_n*std_n
+				xgps_msg.position_covariance[4] = std_e*std_e
+				xgps_msg.position_covariance[8] = std_vert*std_vert
+
+				# STATUS
+				xgps_msg.status.satellites_used = o['numSV']
+				
+
 			self.old_bGPS = rawgps_data['bGPS']
 		if temp is not None:
 			pub_temp = True

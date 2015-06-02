@@ -547,17 +547,23 @@ class MTDevice(object):
 				o['iTOW'],o['year'],o['month'],o['day'],o['hour'],o['min'],o['sec'],o['valid'],\
 				o['tAcc'],o['nano'],o['fixtype'],o['flags'],o['numSV'],o['Reserved1'],lon,\
 				lat,hgt,hmsl,hacc,vacc,veln,vele,veld,gspeed,headmot,sacc,headacc,headveh,\
-				gdop,pdop,tdop,vdop,hdop,ndop,edop = struct.unpack('!LHBBBBBBLlBBBBllllLLlllllLLlHHHHHHH', content)
+				o['gdop'],o['pdop'],o['tdop'],o['vdop'],o['hdop'],o['ndop'],o['edop'] = struct.unpack('!LHBBBBBBLlBBBBllllLLlllllLLlHHHHHHH', content)
 				
 				print o['numSV']
+
+				o['LAT'] = lat
+				o['LON'] = lon
+				o['ALT'] = hgt
+				o['Hacc'] = hacc
+				o['Vacc'] = vacc
 
 				o['lon']=lon*0.0000001
 				o['lat']=lat*0.0000001
 				o['height']=hgt/1000
 
 				###########
-				o['cov_E'] = o['cov_N'] = (hacc/1000)*(hacc/1000)/2 
-				o['cov_D'] = (vacc/1000)*(vacc/1000);
+				o['cov_E'] = o['cov_N'] = (hacc*1e-3)*(hacc*1e-3)*0.5 
+				o['cov_D'] = (vacc*1e-3)*(vacc*1e-3);
 
 			# elif (data_id&0x00F0) == 0x20:	# PVT Data
 				# TO DO: Sat Info
